@@ -5,7 +5,9 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "deploy": "npm run build && wrangler deploy",
+    "preview": "npm run build && wrangler dev"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
@@ -18,7 +20,8 @@
     "@vue/cli-service": "~5.0.8",
     "sass": "^1.77.8",
     "sass-loader": "^13.3.2",
-    "vue-template-compiler": "^2.7.16"
+    "vue-template-compiler": "^2.7.16",
+    "wrangler": "^4.108.0"
   },
   "browserslist": [
     "> 1%",
