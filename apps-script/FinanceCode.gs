@@ -58,11 +58,17 @@ function getOrCreateAttachmentFolder_() {
   return parentFolder.createFolder(ATTACHMENT_FOLDER_NAME);
 }
 
-function saveAttachments_(attachments) {
+function sanitizeFileNamePart_(text) {
+  return String(text || '').replace(/[\\/:*?"<>|]/g, '').trim();
+}
+
+function saveAttachments_(attachments, schoolName, recordDate) {
   if (!attachments || !attachments.length) return [];
 
   var folder = getOrCreateAttachmentFolder_();
   var links = [];
+  var prefixParts = [sanitizeFileNamePart_(recordDate), sanitizeFileNamePart_(schoolName)].filter(Boolean);
+  var prefix = prefixParts.length ? prefixParts.join('_') + '_' : '';
 
   attachments.forEach(function (att) {
     if (!att || !att.base64 || !att.name) return;
@@ -70,7 +76,8 @@ function saveAttachments_(attachments) {
 
     try {
       var bytes = Utilities.base64Decode(att.base64);
-      var blob = Utilities.newBlob(bytes, att.mimeType, att.name);
+      var fileName = prefix + sanitizeFileNamePart_(att.name);
+      var blob = Utilities.newBlob(bytes, att.mimeType, fileName);
       var file = folder.createFile(blob);
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       links.push(file.getName() + ': ' + file.getUrl());
@@ -140,7 +147,7 @@ function doPost(e) {
     row.push((data.otherNote && data.otherNote.other1) || '');
     row.push((data.otherNote && data.otherNote.other2) || '');
 
-    var attachmentLinks = saveAttachments_(data.attachments);
+    var attachmentLinks = saveAttachments_(data.attachments, data.schoolName, data.recordDate);
     row.push(attachmentLinks.join('\n'));
 
     sheet.appendRow(row);
