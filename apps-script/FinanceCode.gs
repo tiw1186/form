@@ -49,6 +49,7 @@ function buildRecordHeaders_(data) {
   headers.push('เงินคงเหลือ - เงินสด (บาท)');
   headers.push('เงินคงเหลือ - เงินฝากธนาคาร (บาท)');
   headers.push('เงินคงเหลือ - เงินฝากส่วนราชการผู้เบิก (บาท)');
+  headers.push('เงินคงเหลือ - รวมทั้งหมด (บาท)');
   headers.push('หมายเหตุอื่นๆ - เงินอื่นๆ รายการที่ 1');
   headers.push('หมายเหตุอื่นๆ - เงินอื่นๆ รายการที่ 2');
   return headers;
@@ -88,6 +89,7 @@ function doPost(e) {
     row.push((data.balance && data.balance.cash) || 0);
     row.push((data.balance && data.balance.bank) || 0);
     row.push((data.balance && data.balance.remit) || 0);
+    row.push((data.balance && data.balance.total) || 0);
     row.push((data.otherNote && data.otherNote.other1) || '');
     row.push((data.otherNote && data.otherNote.other2) || '');
 

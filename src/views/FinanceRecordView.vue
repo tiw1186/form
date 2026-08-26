@@ -157,7 +157,7 @@
                   dense
                   outlined
                   hide-details
-                  type="number"
+                  inputmode="decimal"
                   placeholder="0.00"
                   class="ledger-input"
                 />
@@ -178,7 +178,7 @@
                     dense
                     outlined
                     hide-details
-                    type="number"
+                    inputmode="decimal"
                     placeholder="0.00"
                     class="ledger-input"
                   />
@@ -187,7 +187,7 @@
                     dense
                     outlined
                     hide-details
-                    type="number"
+                    inputmode="decimal"
                     placeholder="0.00"
                     class="ledger-input"
                   />
@@ -205,7 +205,7 @@
                       dense
                       outlined
                       hide-details
-                      type="number"
+                      inputmode="decimal"
                       placeholder="0.00"
                       class="ledger-input ledger-input--block"
                       @input="setBalance(meta.key, $event)"
@@ -546,7 +546,8 @@ export default {
         balance: {
           cash: toNum(this.form.balance.cash),
           bank: toNum(this.form.balance.bank),
-          remit: toNum(this.form.balance.remit)
+          remit: toNum(this.form.balance.remit),
+          total: this.grandTotal
         },
         otherNote: {
           other1: (this.form.otherNote.other1 || '').toString().trim(),
@@ -569,7 +570,7 @@ export default {
       }
 
       const payload = this.buildPayload()
-      const total = payload.balance.cash + payload.balance.bank + payload.balance.remit
+      const total = payload.balance.total
       const [y, m, d] = payload.recordDate.split('-')
 
       if (!GOOGLE_FINANCE_WEBAPP_URL || GOOGLE_FINANCE_WEBAPP_URL.includes('PASTE_YOUR')) {
@@ -824,16 +825,6 @@ export default {
 .ledger-input ::v-deep input {
   text-align: right;
   font-variant-numeric: tabular-nums;
-}
-
-.ledger-input ::v-deep input::-webkit-outer-spin-button,
-.ledger-input ::v-deep input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.ledger-input ::v-deep input[type='number'] {
-  -moz-appearance: textfield;
 }
 
 .note-input ::v-deep .v-input__slot {
