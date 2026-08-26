@@ -121,35 +121,42 @@
               title="รายการเงินฝากส่วนราชการผู้เบิก"
               hint="เงินฝากที่หน่วยงานส่วนราชการเป็นผู้เบิกแทนโรงเรียน"
             />
-                <v-row dense class="mb-4">
-                  <v-col v-for="item in remitItems" :key="item.key" cols="12" sm="6">
-                    <v-card outlined class="pa-3 entry-card">
-                      <div class="d-flex align-center mb-2">
-                        <v-avatar size="32" color="indigo lighten-5" class="mr-2">
-                          <v-icon small color="indigo darken-2">{{ item.icon }}</v-icon>
-                        </v-avatar>
-                        <span class="text-body-2 font-weight-medium">{{ item.label }}</span>
-                      </div>
-                      <v-text-field
-                        v-model.number="form.remit[item.key]"
-                        outlined
-                        dense
-                        rounded
-                        type="number"
-                        suffix="บาท"
-                        label="ยอดเงิน"
-                        hide-details
-                      />
-                    </v-card>
-                  </v-col>
-                </v-row>
+                <div class="section-panel pa-4 pa-sm-5 mb-5" :style="panelStyle('#3F51B5')">
+                  <v-row dense>
+                    <v-col v-for="item in remitItems" :key="item.key" cols="12" sm="6">
+                      <v-card class="pa-3 entry-card">
+                        <div class="d-flex align-center mb-2">
+                          <v-avatar size="32" color="indigo lighten-5" class="mr-2">
+                            <v-icon small color="indigo darken-2">{{ item.icon }}</v-icon>
+                          </v-avatar>
+                          <span class="text-body-2 font-weight-medium">{{ item.label }}</span>
+                        </div>
+                        <v-text-field
+                          v-model.number="form.remit[item.key]"
+                          outlined
+                          dense
+                          rounded
+                          type="number"
+                          suffix="บาท"
+                          label="ยอดเงิน"
+                          hide-details
+                        />
+                      </v-card>
+                    </v-col>
+                  </v-row>
+                </div>
 
                 <section-header
                   number="3"
                   title="รายการงบประมาณ"
                   hint="กรอกยอดเงินสดและเงินฝากธนาคารของแต่ละรายการ"
                 />
-                <div v-for="group in budgetGroups" :key="group.title" class="mb-5">
+                <div
+                  v-for="group in budgetGroups"
+                  :key="group.title"
+                  class="section-panel pa-4 pa-sm-5 mb-5"
+                  :style="panelStyle(group.color)"
+                >
                   <div class="d-flex align-center mb-3">
                     <v-avatar :color="group.color" size="28" class="mr-2">
                       <v-icon x-small color="white">{{ group.icon }}</v-icon>
@@ -160,7 +167,7 @@
                   </div>
                   <v-row dense>
                     <v-col v-for="item in group.items" :key="item.key" cols="12" md="6">
-                      <v-card outlined class="pa-3 entry-card">
+                      <v-card class="pa-3 entry-card">
                         <div class="d-flex align-center mb-2">
                           <v-avatar size="30" color="grey lighten-4" class="mr-2">
                             <v-icon small :color="group.color">{{ item.icon }}</v-icon>
@@ -216,48 +223,50 @@
                   <span class="text-h6 font-weight-bold ml-1">฿ {{ formatCurrency(grandTotal) }}</span>
                 </v-alert>
 
-                <v-row dense class="mb-2">
-                  <v-col v-for="meta in balanceMeta" :key="meta.key" cols="12" sm="4">
-                    <v-card outlined class="stat-card" :style="{ borderTopColor: meta.color }">
-                      <div class="pa-4">
-                        <div class="d-flex align-center mb-3">
-                          <v-avatar :color="meta.color" size="38" class="mr-3">
-                            <v-icon color="white" small>{{ meta.icon }}</v-icon>
-                          </v-avatar>
-                          <div class="text-body-2 font-weight-medium grey--text text--darken-2">
-                            {{ meta.label }}
+                <div class="section-panel pa-4 pa-sm-5 mb-2" :style="panelStyle('#0D47A1')">
+                  <v-row dense>
+                    <v-col v-for="meta in balanceMeta" :key="meta.key" cols="12" sm="4">
+                      <v-card class="stat-card" :style="{ borderTopColor: meta.color }">
+                        <div class="pa-4">
+                          <div class="d-flex align-center mb-3">
+                            <v-avatar :color="meta.color" size="38" class="mr-3">
+                              <v-icon color="white" small>{{ meta.icon }}</v-icon>
+                            </v-avatar>
+                            <div class="text-body-2 font-weight-medium grey--text text--darken-2">
+                              {{ meta.label }}
+                            </div>
+                          </div>
+                          <v-text-field
+                            :value="form.balance[meta.key]"
+                            outlined
+                            dense
+                            type="number"
+                            suffix="บาท"
+                            hide-details
+                            class="stat-input"
+                            @input="setBalance(meta.key, $event)"
+                          >
+                            <template #append>
+                              <v-icon
+                                v-if="balanceOverridden[meta.key]"
+                                small
+                                color="primary"
+                                title="คำนวณอัตโนมัติใหม่"
+                                style="cursor: pointer"
+                                @click="recalcBalance(meta.key)"
+                              >
+                                mdi-calculator-variant
+                              </v-icon>
+                            </template>
+                          </v-text-field>
+                          <div class="text-caption grey--text mt-2">
+                            ฿ {{ formatCurrency(form.balance[meta.key]) }}
                           </div>
                         </div>
-                        <v-text-field
-                          :value="form.balance[meta.key]"
-                          outlined
-                          dense
-                          type="number"
-                          suffix="บาท"
-                          hide-details
-                          class="stat-input"
-                          @input="setBalance(meta.key, $event)"
-                        >
-                          <template #append>
-                            <v-icon
-                              v-if="balanceOverridden[meta.key]"
-                              small
-                              color="primary"
-                              title="คำนวณอัตโนมัติใหม่"
-                              style="cursor: pointer"
-                              @click="recalcBalance(meta.key)"
-                            >
-                              mdi-calculator-variant
-                            </v-icon>
-                          </template>
-                        </v-text-field>
-                        <div class="text-caption grey--text mt-2">
-                          ฿ {{ formatCurrency(form.balance[meta.key]) }}
-                        </div>
-                      </div>
-                    </v-card>
-                  </v-col>
-                </v-row>
+                      </v-card>
+                    </v-col>
+                  </v-row>
+                </div>
 
                 <section-header
                   number="5"
@@ -265,48 +274,50 @@
                   hint="ยอดรวมของเงินอื่นๆ รายการที่ 1 และ 2 คำนวณอัตโนมัติ แก้ไขตัวเลขเองได้"
                   class="mt-4"
                 />
-                <v-row dense class="mb-2">
-                  <v-col v-for="meta in otherNoteMeta" :key="meta.key" cols="12" sm="6">
-                    <v-card outlined class="stat-card stat-card--muted" :style="{ borderTopColor: meta.color }">
-                      <div class="pa-4">
-                        <div class="d-flex align-center mb-3">
-                          <v-avatar :color="meta.color" size="38" class="mr-3">
-                            <v-icon color="white" small>{{ meta.icon }}</v-icon>
-                          </v-avatar>
-                          <div class="text-body-2 font-weight-medium grey--text text--darken-2">
-                            {{ meta.label }}
+                <div class="section-panel pa-4 pa-sm-5 mb-2" :style="panelStyle('#546E7A')">
+                  <v-row dense>
+                    <v-col v-for="meta in otherNoteMeta" :key="meta.key" cols="12" sm="6">
+                      <v-card class="stat-card stat-card--muted" :style="{ borderTopColor: meta.color }">
+                        <div class="pa-4">
+                          <div class="d-flex align-center mb-3">
+                            <v-avatar :color="meta.color" size="38" class="mr-3">
+                              <v-icon color="white" small>{{ meta.icon }}</v-icon>
+                            </v-avatar>
+                            <div class="text-body-2 font-weight-medium grey--text text--darken-2">
+                              {{ meta.label }}
+                            </div>
+                          </div>
+                          <v-text-field
+                            :value="form.otherNote[meta.key]"
+                            outlined
+                            dense
+                            type="number"
+                            suffix="บาท"
+                            hide-details
+                            class="stat-input"
+                            @input="setOtherNote(meta.key, $event)"
+                          >
+                            <template #append>
+                              <v-icon
+                                v-if="otherNoteOverridden[meta.key]"
+                                small
+                                color="primary"
+                                title="คำนวณอัตโนมัติใหม่"
+                                style="cursor: pointer"
+                                @click="recalcOtherNote(meta.key)"
+                              >
+                                mdi-calculator-variant
+                              </v-icon>
+                            </template>
+                          </v-text-field>
+                          <div class="text-caption grey--text mt-2">
+                            ฿ {{ formatCurrency(form.otherNote[meta.key]) }}
                           </div>
                         </div>
-                        <v-text-field
-                          :value="form.otherNote[meta.key]"
-                          outlined
-                          dense
-                          type="number"
-                          suffix="บาท"
-                          hide-details
-                          class="stat-input"
-                          @input="setOtherNote(meta.key, $event)"
-                        >
-                          <template #append>
-                            <v-icon
-                              v-if="otherNoteOverridden[meta.key]"
-                              small
-                              color="primary"
-                              title="คำนวณอัตโนมัติใหม่"
-                              style="cursor: pointer"
-                              @click="recalcOtherNote(meta.key)"
-                            >
-                              mdi-calculator-variant
-                            </v-icon>
-                          </template>
-                        </v-text-field>
-                        <div class="text-caption grey--text mt-2">
-                          ฿ {{ formatCurrency(form.otherNote[meta.key]) }}
-                        </div>
-                      </div>
-                    </v-card>
-                  </v-col>
-                </v-row>
+                      </v-card>
+                    </v-col>
+                  </v-row>
+                </div>
 
                 <v-alert v-if="submitError" type="error" dense outlined class="mt-4 rounded-lg">
                   {{ submitError }}
@@ -396,6 +407,16 @@ const OTHER_NOTE_META = [
 function toNum(v) {
   const n = Number(v)
   return Number.isFinite(n) ? n : 0
+}
+
+function hexToRgba(hex, alpha) {
+  const clean = hex.replace('#', '')
+  const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean
+  const bigint = parseInt(full, 16)
+  const r = (bigint >> 16) & 255
+  const g = (bigint >> 8) & 255
+  const b = bigint & 255
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 function emptyBudget() {
@@ -550,6 +571,12 @@ export default {
   methods: {
     formatCurrency(v) {
       return toNum(v).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    },
+    panelStyle(color) {
+      return {
+        backgroundColor: hexToRgba(color, 0.06),
+        borderLeft: `4px solid ${color}`
+      }
     },
     setBalance(field, value) {
       this.form.balance[field] = toNum(value)
@@ -733,7 +760,21 @@ export default {
 .form-card,
 .success-card,
 .school-toolbar {
-  background-color: #fff;
+  background: linear-gradient(180deg, #ffffff 0%, #f6f8fc 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.form-card::before,
+.success-card::before,
+.school-toolbar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #0d47a1, #00695c);
 }
 
 .school-combobox ::v-deep .v-select__selection {
@@ -741,24 +782,32 @@ export default {
   color: #0d47a1;
 }
 
+.section-panel {
+  border-radius: 14px;
+}
+
 .entry-card {
   border-radius: 14px !important;
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  background-color: #fff !important;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 1px 3px rgba(15, 30, 60, 0.08) !important;
 }
 
 .entry-card:hover {
-  border-color: #90a4ae;
-  box-shadow: 0 2px 10px rgba(13, 71, 161, 0.08);
+  box-shadow: 0 4px 14px rgba(13, 71, 161, 0.12) !important;
+  transform: translateY(-1px);
 }
 
 .stat-card {
   border-radius: 14px !important;
+  background-color: #fff !important;
   border-top-width: 4px !important;
   border-top-style: solid !important;
+  box-shadow: 0 1px 3px rgba(15, 30, 60, 0.08) !important;
 }
 
 .stat-card--muted {
-  background-color: #fafafa;
+  background-color: #fbfbfb !important;
 }
 
 .stat-input ::v-deep input {
