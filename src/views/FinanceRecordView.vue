@@ -248,6 +248,41 @@
                 </v-row>
               </div>
 
+              <!-- อัพโหลดไฟล์ -->
+              <div class="section-bar">อัพโหลดไฟล์</div>
+              <div class="pa-4 pa-sm-6">
+                <div class="d-flex align-center flex-wrap" style="gap: 14px">
+                  <v-btn outlined rounded color="#1F6F4A" class="upload-btn" @click="triggerFilePicker">
+                    <v-icon left>mdi-tray-arrow-up</v-icon>
+                    แนบไฟล์
+                  </v-btn>
+                  <div class="text-caption grey--text">
+                    รองรับรูปภาพ (JPG, PNG), PDF, Word และ Excel ทุกเวอร์ชัน ขนาดไม่เกิน 5MB ต่อไฟล์
+                  </div>
+                </div>
+                <input
+                  ref="fileInput"
+                  type="file"
+                  multiple
+                  class="hidden-file-input"
+                  accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  @change="onNativeFileChange"
+                />
+                <v-alert v-if="attachmentError" type="error" dense outlined class="mt-2 rounded-lg">
+                  {{ attachmentError }}
+                </v-alert>
+                <div v-if="attachments.length" class="attachment-list mt-3">
+                  <div v-for="(file, idx) in attachments" :key="file.name + idx" class="attachment-item">
+                    <v-icon small color="#1F6F4A" class="mr-2">{{ attachmentIcon(file.mimeType) }}</v-icon>
+                    <span class="attachment-item__name">{{ file.name }}</span>
+                    <span class="attachment-item__size">{{ formatFileSize(file.size) }}</span>
+                    <v-btn icon x-small @click="removeAttachment(idx)">
+                      <v-icon x-small>mdi-close</v-icon>
+                    </v-btn>
+                  </div>
+                </div>
+              </div>
+
               <div class="px-4 px-sm-6">
                 <v-alert v-if="submitError" type="error" dense outlined class="mt-2 rounded-lg">
                   {{ submitError }}
@@ -326,6 +361,20 @@ const OTHER_NOTE_META = [
   { key: 'other1', label: 'เงินอื่นๆ รายการที่ 1' },
   { key: 'other2', label: 'เงินอื่นๆ รายการที่ 2' }
 ]
+
+const ALLOWED_ATTACHMENT_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+]
+
+const ALLOWED_ATTACHMENT_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx', '.xls', '.xlsx']
+
+const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024
 
 function toNum(v) {
   const n = Number(v)
@@ -406,6 +455,8 @@ export default {
       schoolsLoading: false,
       schoolsError: '',
       balanceOverridden: { cash: false, bank: false, remit: false },
+      attachments: [],
+      attachmentError: '',
       submitting: false,
       submitError: '',
       schoolRequiredError: false,
@@ -479,6 +530,66 @@ export default {
       const map = { cash: 'computedCashSum', bank: 'computedBankSum', remit: 'computedRemitSum' }
       this.form.balance[field] = this[map[field]]
     },
+    isAllowedAttachment(file) {
+      const ext = '.' + (file.name.split('.').pop() || '').toLowerCase()
+      return ALLOWED_ATTACHMENT_TYPES.includes(file.type) || ALLOWED_ATTACHMENT_EXTENSIONS.includes(ext)
+    },
+    readFileAsBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          const result = typeof reader.result === 'string' ? reader.result : ''
+          resolve(result.split(',')[1] || '')
+        }
+        reader.onerror = () => reject(new Error('read-failed'))
+        reader.readAsDataURL(file)
+      })
+    },
+    triggerFilePicker() {
+      this.$refs.fileInput.click()
+    },
+    onNativeFileChange(event) {
+      const files = Array.from(event.target.files || [])
+      event.target.value = ''
+      this.onFilesPicked(files)
+    },
+    async onFilesPicked(files) {
+      this.attachmentError = ''
+      const list = Array.isArray(files) ? files : files ? [files] : []
+
+      for (const file of list) {
+        if (!this.isAllowedAttachment(file)) {
+          this.attachmentError = `ไฟล์ "${file.name}" ไม่ใช่ชนิดที่รองรับ (รองรับเฉพาะ JPG, PNG, PDF, Word, Excel)`
+          continue
+        }
+        if (file.size > MAX_ATTACHMENT_SIZE) {
+          this.attachmentError = `ไฟล์ "${file.name}" มีขนาดเกิน 5MB`
+          continue
+        }
+        try {
+          const base64 = await this.readFileAsBase64(file)
+          this.attachments.push({ name: file.name, mimeType: file.type, size: file.size, base64 })
+        } catch (err) {
+          this.attachmentError = `ไม่สามารถอ่านไฟล์ "${file.name}" ได้`
+        }
+      }
+    },
+    removeAttachment(index) {
+      this.attachments.splice(index, 1)
+    },
+    formatFileSize(bytes) {
+      if (!bytes) return '0 KB'
+      const kb = bytes / 1024
+      if (kb < 1024) return `${kb.toFixed(0)} KB`
+      return `${(kb / 1024).toFixed(1)} MB`
+    },
+    attachmentIcon(mimeType) {
+      if (mimeType.startsWith('image/')) return 'mdi-file-image-outline'
+      if (mimeType === 'application/pdf') return 'mdi-file-pdf-box'
+      if (mimeType.includes('word')) return 'mdi-file-word-outline'
+      if (mimeType.includes('excel') || mimeType.includes('sheet')) return 'mdi-file-excel-outline'
+      return 'mdi-file-outline'
+    },
     async fetchSchools() {
       this.schoolsLoading = true
       this.schoolsError = ''
@@ -518,6 +629,8 @@ export default {
       this.form.balance.cash = this.computedCashSum
       this.form.balance.bank = this.computedBankSum
       this.form.balance.remit = this.computedRemitSum
+      this.attachments = []
+      this.attachmentError = ''
       this.submitError = ''
       this.schoolRequiredError = false
       if (this.$refs.form) this.$refs.form.resetValidation()
@@ -552,7 +665,12 @@ export default {
         otherNote: {
           other1: (this.form.otherNote.other1 || '').toString().trim(),
           other2: (this.form.otherNote.other2 || '').toString().trim()
-        }
+        },
+        attachments: this.attachments.map((file) => ({
+          name: file.name,
+          mimeType: file.mimeType,
+          base64: file.base64
+        }))
       }
     },
     async submitForm() {
@@ -850,6 +968,52 @@ export default {
   color: #666;
   font-weight: 600;
   margin-bottom: 6px;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.upload-btn {
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.upload-btn:hover {
+  background: #e7f2ea !important;
+}
+
+.attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fbfbf8;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.attachment-item__name {
+  flex: 1;
+  font-size: 0.85rem;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-item__size {
+  font-size: 0.75rem;
+  color: #999;
+  flex: none;
 }
 
 .total-cell {
