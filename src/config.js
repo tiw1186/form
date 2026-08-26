@@ -10,4 +10,4 @@ export const FINANCE_RECORD_SHEET_GID = '1035907838'
 
 // วาง URL ของ Google Apps Script Web App ที่ deploy จากไฟล์ apps-script/FinanceCode.gs
 // (ต้องผูก Apps Script เข้ากับสเปรดชีตด้านบนโดยตรง) วิธีตั้งค่าดูที่ apps-script/README-finance.md
-export const GOOGLE_FINANCE_WEBAPP_URL = 'PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE'
+export const GOOGLE_FINANCE_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwOkhL3eamea2PY7taZ70uJADrNNjBu4A_sa77Iz_NK3FbVi6vRvzq7vxJ_zlOxSxxP/exec'
