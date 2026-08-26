@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+import HomeView from '../views/HomeView.vue'
 import SurveyView from '../views/SurveyView.vue'
 import FinanceRecordView from '../views/FinanceRecordView.vue'
 
@@ -8,6 +9,12 @@ Vue.use(VueRouter)
 const routes = [
   {
     path: '/',
+    name: 'home',
+    component: HomeView,
+    meta: { title: 'ระบบ สพป.อุดรธานี เขต 3' }
+  },
+  {
+    path: '/form',
     name: 'survey',
     component: SurveyView,
     meta: { title: 'แบบสำรวจที่ราชพัสดุ สพป.อุดรธานี เขต 3' }
