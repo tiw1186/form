@@ -1,351 +1,283 @@
 <template>
-  <div>
+  <div class="finance-page">
     <div class="hero">
-      <v-container class="text-center py-8 py-sm-12">
-        <v-avatar size="72" class="mb-4 elevation-8 hero-avatar" color="white">
-          <v-img :src="logo" contain />
-        </v-avatar>
-        <div class="text-h6 text-sm-h4 font-weight-bold white--text px-4">
-          บันทึกเงินคงเหลือประจำวันโรงเรียน
+      <v-container class="py-8 py-sm-10">
+        <div class="d-flex align-center" style="gap: 16px">
+          <div class="hero-icon">
+            <v-icon color="white" size="26">mdi-bank</v-icon>
+          </div>
+          <div>
+            <div class="hero-eyebrow">Daily School Finance Record</div>
+            <div class="text-h5 text-sm-h4 font-weight-bold white--text">
+              ระบบกรอกเงินคงเหลือประจำวันโรงเรียน
+            </div>
+          </div>
         </div>
-        <div class="text-body-2 text-sm-subtitle-1 white--text mt-2" style="opacity: 0.85">
-          สำนักงานเขตพื้นที่การศึกษาประถมศึกษาอุดรธานี เขต 3
+        <div class="hero-subtitle mt-2">
+          ค้นหาโรงเรียน กรอกยอดเงิน และบันทึกข้อมูลประจำวันลงในตารางของโรงเรียน
         </div>
       </v-container>
     </div>
 
-    <v-container class="form-container py-6 py-sm-10 content-lift" style="max-width: 980px">
-      <!-- แถบเครื่องมือเลือก/ค้นหาโรงเรียน -->
-      <v-card elevation="6" class="pa-3 pa-sm-5 rounded-xl mb-5 school-toolbar">
-        <div class="d-flex align-center flex-wrap" style="gap: 12px">
-          <v-avatar color="primary" size="44" class="d-none d-sm-flex">
-            <v-icon color="white">mdi-school</v-icon>
-          </v-avatar>
-          <v-combobox
-            v-model="selectedSchool"
-            :items="schoolOptions"
-            :loading="schoolsLoading"
-            outlined
-            dense
-            rounded
-            hide-selected
-            clearable
-            prepend-inner-icon="mdi-magnify"
-            label="ค้นหา / เลือกโรงเรียน"
-            placeholder="พิมพ์เพื่อค้นหาชื่อโรงเรียน..."
-            class="flex-grow-1 school-combobox"
-            style="min-width: 240px"
-            hide-details="auto"
-          />
-          <v-btn icon :loading="schoolsLoading" @click="fetchSchools" title="โหลดรายชื่อโรงเรียนใหม่">
-            <v-icon>mdi-refresh</v-icon>
-          </v-btn>
-        </div>
-        <v-alert v-if="schoolsError" type="warning" dense outlined class="mt-3 mb-0 rounded-lg">
-          {{ schoolsError }}
-        </v-alert>
-      </v-card>
-
+    <v-container class="content-lift pb-10" style="max-width: 1180px">
       <v-card
         v-if="submitted"
-        elevation="10"
+        elevation="8"
         class="pa-6 pa-sm-10 text-center rounded-xl success-card"
       >
-        <v-avatar color="success" size="92" class="mb-2 success-pulse">
-          <v-icon color="white" size="54">mdi-check-bold</v-icon>
+        <v-avatar color="#1F6F4A" size="88" class="mb-2 success-pulse">
+          <v-icon color="white" size="52">mdi-check-bold</v-icon>
         </v-avatar>
         <div class="text-h5 font-weight-bold mt-4">บันทึกข้อมูลเรียบร้อยแล้ว</div>
         <div class="text-body-1 grey--text text--darken-1 mt-2">
           บันทึกเงินคงเหลือประจำวันเรียบร้อยแล้ว
         </div>
         <div class="d-flex flex-wrap justify-center mt-5" style="gap: 8px">
-          <v-chip color="primary" outlined label>
-            <v-icon left small>mdi-school-outline</v-icon>{{ lastSavedSchool }}
+          <v-chip color="#1F6F4A" outlined label text-color="#1F6F4A">
+            <v-icon left small color="#1F6F4A">mdi-school-outline</v-icon>{{ lastSavedSchool }}
           </v-chip>
-          <v-chip color="secondary" outlined label>
+          <v-chip outlined label>
             <v-icon left small>mdi-calendar-outline</v-icon>{{ lastSavedDateDisplay }}
           </v-chip>
-          <v-chip color="success" outlined label>
-            <v-icon left small>mdi-cash-multiple</v-icon>฿ {{ formatCurrency(lastSavedTotal) }}
+          <v-chip color="#1F6F4A" outlined label text-color="#1F6F4A">
+            <v-icon left small color="#1F6F4A">mdi-cash-multiple</v-icon>฿ {{ formatCurrency(lastSavedTotal) }}
           </v-chip>
         </div>
-        <v-btn color="primary" large rounded elevation="2" class="mt-8 px-8" @click="startNewResponse">
+        <v-btn class="save-btn mt-8 px-8" dark large rounded elevation="2" @click="startNewResponse">
           <v-icon left>mdi-plus</v-icon>
           บันทึกรายการถัดไป
         </v-btn>
       </v-card>
 
-      <!-- แถบแบบบันทึกประจำวัน -->
-      <v-card v-else elevation="10" class="rounded-xl form-card">
-        <div class="pa-4 pa-sm-6 pb-0">
-          <section-header number="1" title="วันที่บันทึก" required />
-          <v-menu
-            v-model="dateMenu"
-            :close-on-content-click="false"
-            transition="scale-transition"
-            offset-y
-            min-width="auto"
-          >
-            <template #activator="{ on, attrs }">
+      <v-row v-else dense>
+        <!-- เลือกโรงเรียน -->
+        <v-col cols="12" md="4" lg="3">
+          <v-card elevation="6" class="sidebar-card rounded-xl">
+            <div class="pa-4">
+              <div class="d-flex align-center mb-1">
+                <v-avatar size="28" color="#E7F2EA" class="mr-2">
+                  <v-icon small color="#1F6F4A">mdi-office-building-outline</v-icon>
+                </v-avatar>
+                <span class="text-subtitle-1 font-weight-bold">เลือกโรงเรียน</span>
+              </div>
+              <div class="text-caption grey--text text--darken-1 mb-3">
+                พิมพ์ชื่อ กลุ่ม หรือเลขลำดับเพื่อค้นหา
+              </div>
+
               <v-text-field
-                v-model="displayDate"
-                outlined
+                v-model="schoolSearchQuery"
                 dense
+                outlined
                 rounded
-                readonly
-                prepend-inner-icon="mdi-calendar-outline"
-                placeholder="เลือกวันที่"
-                :rules="[rules.required]"
-                v-bind="attrs"
-                v-on="on"
-                class="mb-2"
-                style="max-width: 280px"
+                hide-details
+                prepend-inner-icon="mdi-magnify"
+                placeholder="ค้นหารายชื่อโรงเรียน"
+                class="mb-3"
               />
-            </template>
-            <v-date-picker
-              v-model="form.recordDate"
-              locale="th-TH"
-              no-title
-              color="primary"
-              @input="dateMenu = false"
-            />
-          </v-menu>
-        </div>
 
-        <v-divider class="mt-4" />
+              <div v-if="selectedSchool" class="selected-school-chip mb-3">
+                โรงเรียนที่เลือก: <strong>{{ selectedSchoolDisplay }}</strong>
+              </div>
 
-        <v-card-text class="pa-4 pa-sm-6">
-          <v-form ref="form" v-model="formValid" lazy-validation>
-            <section-header
-              number="2"
-              title="รายการเงินฝากส่วนราชการผู้เบิก"
-              hint="เงินฝากที่หน่วยงานส่วนราชการเป็นผู้เบิกแทนโรงเรียน"
-            />
-                <div class="section-panel pa-4 pa-sm-5 mb-5" :style="panelStyle('#3F51B5')">
-                  <v-row dense>
-                    <v-col v-for="item in remitItems" :key="item.key" cols="12" sm="6">
-                      <v-card class="pa-3 entry-card">
-                        <div class="d-flex align-center mb-2">
-                          <v-avatar size="32" color="indigo lighten-5" class="mr-2">
-                            <v-icon small color="indigo darken-2">{{ item.icon }}</v-icon>
-                          </v-avatar>
-                          <span class="text-body-2 font-weight-medium">{{ item.label }}</span>
-                        </div>
-                        <v-text-field
-                          v-model.number="form.remit[item.key]"
-                          outlined
-                          dense
-                          rounded
-                          type="number"
-                          suffix="บาท"
-                          label="ยอดเงิน"
-                          hide-details
-                        />
-                      </v-card>
-                    </v-col>
-                  </v-row>
-                </div>
+              <v-alert v-if="schoolsError" type="warning" dense outlined class="mb-3 rounded-lg">
+                {{ schoolsError }}
+              </v-alert>
 
-                <section-header
-                  number="3"
-                  title="รายการงบประมาณ"
-                  hint="กรอกยอดเงินสดและเงินฝากธนาคารของแต่ละรายการ"
-                />
-                <div
-                  v-for="group in budgetGroups"
-                  :key="group.title"
-                  class="section-panel pa-4 pa-sm-5 mb-5"
-                  :style="panelStyle(group.color)"
+              <div class="text-center py-6" v-if="schoolsLoading">
+                <v-progress-circular indeterminate color="#1F6F4A" size="28" />
+              </div>
+              <div v-else class="school-list">
+                <button
+                  v-for="school in filteredSchools"
+                  :key="school.number"
+                  type="button"
+                  class="school-item"
+                  :class="{ 'school-item--active': school.name === selectedSchool }"
+                  @click="selectedSchool = school.name"
                 >
-                  <div class="d-flex align-center mb-3">
-                    <v-avatar :color="group.color" size="28" class="mr-2">
-                      <v-icon x-small color="white">{{ group.icon }}</v-icon>
-                    </v-avatar>
-                    <span class="text-subtitle-2 font-weight-bold" :style="{ color: group.color }">
-                      {{ group.title }}
-                    </span>
-                  </div>
-                  <v-row dense>
-                    <v-col v-for="item in group.items" :key="item.key" cols="12" md="6">
-                      <v-card class="pa-3 entry-card">
-                        <div class="d-flex align-center mb-2">
-                          <v-avatar size="30" color="grey lighten-4" class="mr-2">
-                            <v-icon small :color="group.color">{{ item.icon }}</v-icon>
-                          </v-avatar>
-                          <span class="text-body-2 font-weight-medium">{{ item.label }}</span>
-                        </div>
-                        <v-row dense>
-                          <v-col cols="6">
-                            <v-text-field
-                              v-model.number="form.budget[item.key].cash"
-                              outlined
-                              dense
-                              rounded
-                              type="number"
-                              suffix="บาท"
-                              label="เงินสด"
-                              hide-details
-                            />
-                          </v-col>
-                          <v-col cols="6">
-                            <v-text-field
-                              v-model.number="form.budget[item.key].bank"
-                              outlined
-                              dense
-                              rounded
-                              type="number"
-                              suffix="บาท"
-                              label="เงินฝากธนาคาร"
-                              hide-details
-                            />
-                          </v-col>
-                        </v-row>
-                      </v-card>
-                    </v-col>
-                  </v-row>
+                  <span class="school-item__number">{{ school.number }}</span>
+                  <span class="school-item__dot">·</span>
+                  <span class="school-item__name">{{ school.name }}</span>
+                </button>
+
+                <div v-if="!filteredSchools.length && !schoolSearchQuery.trim()" class="text-caption grey--text text-center py-4">
+                  ไม่พบรายชื่อโรงเรียน
                 </div>
-
-                <section-header
-                  number="4"
-                  title="เงินคงเหลือ"
-                  hint="คำนวณยอดรวมให้อัตโนมัติ (ไม่รวมเงินอื่นๆ รายการที่ 1 และ 2) แก้ไขตัวเลขเองได้"
-                  class="mt-4"
-                />
-
-                <v-alert
-                  color="primary"
-                  dark
-                  dense
-                  class="rounded-lg mb-4 total-banner"
-                  icon="mdi-cash-multiple"
-                >
-                  ยอดเงินคงเหลือรวมทั้งสิ้น
-                  <span class="text-h6 font-weight-bold ml-1">฿ {{ formatCurrency(grandTotal) }}</span>
-                </v-alert>
-
-                <div class="section-panel pa-4 pa-sm-5 mb-2" :style="panelStyle('#0D47A1')">
-                  <v-row dense>
-                    <v-col v-for="meta in balanceMeta" :key="meta.key" cols="12" sm="4">
-                      <v-card class="stat-card" :style="{ borderTopColor: meta.color }">
-                        <div class="pa-4">
-                          <div class="d-flex align-center mb-3">
-                            <v-avatar :color="meta.color" size="38" class="mr-3">
-                              <v-icon color="white" small>{{ meta.icon }}</v-icon>
-                            </v-avatar>
-                            <div class="text-body-2 font-weight-medium grey--text text--darken-2">
-                              {{ meta.label }}
-                            </div>
-                          </div>
-                          <v-text-field
-                            :value="form.balance[meta.key]"
-                            outlined
-                            dense
-                            type="number"
-                            suffix="บาท"
-                            hide-details
-                            class="stat-input"
-                            @input="setBalance(meta.key, $event)"
-                          >
-                            <template #append>
-                              <v-icon
-                                v-if="balanceOverridden[meta.key]"
-                                small
-                                color="primary"
-                                title="คำนวณอัตโนมัติใหม่"
-                                style="cursor: pointer"
-                                @click="recalcBalance(meta.key)"
-                              >
-                                mdi-calculator-variant
-                              </v-icon>
-                            </template>
-                          </v-text-field>
-                          <div class="text-caption grey--text mt-2">
-                            ฿ {{ formatCurrency(form.balance[meta.key]) }}
-                          </div>
-                        </div>
-                      </v-card>
-                    </v-col>
-                  </v-row>
-                </div>
-
-                <section-header
-                  number="5"
-                  title="หมายเหตุอื่น ๆ"
-                  hint="ยอดรวมของเงินอื่นๆ รายการที่ 1 และ 2 คำนวณอัตโนมัติ แก้ไขตัวเลขเองได้"
-                  class="mt-4"
-                />
-                <div class="section-panel pa-4 pa-sm-5 mb-2" :style="panelStyle('#546E7A')">
-                  <v-row dense>
-                    <v-col v-for="meta in otherNoteMeta" :key="meta.key" cols="12" sm="6">
-                      <v-card class="stat-card stat-card--muted" :style="{ borderTopColor: meta.color }">
-                        <div class="pa-4">
-                          <div class="d-flex align-center mb-3">
-                            <v-avatar :color="meta.color" size="38" class="mr-3">
-                              <v-icon color="white" small>{{ meta.icon }}</v-icon>
-                            </v-avatar>
-                            <div class="text-body-2 font-weight-medium grey--text text--darken-2">
-                              {{ meta.label }}
-                            </div>
-                          </div>
-                          <v-text-field
-                            :value="form.otherNote[meta.key]"
-                            outlined
-                            dense
-                            type="number"
-                            suffix="บาท"
-                            hide-details
-                            class="stat-input"
-                            @input="setOtherNote(meta.key, $event)"
-                          >
-                            <template #append>
-                              <v-icon
-                                v-if="otherNoteOverridden[meta.key]"
-                                small
-                                color="primary"
-                                title="คำนวณอัตโนมัติใหม่"
-                                style="cursor: pointer"
-                                @click="recalcOtherNote(meta.key)"
-                              >
-                                mdi-calculator-variant
-                              </v-icon>
-                            </template>
-                          </v-text-field>
-                          <div class="text-caption grey--text mt-2">
-                            ฿ {{ formatCurrency(form.otherNote[meta.key]) }}
-                          </div>
-                        </div>
-                      </v-card>
-                    </v-col>
-                  </v-row>
-                </div>
-
-                <v-alert v-if="submitError" type="error" dense outlined class="mt-4 rounded-lg">
-                  {{ submitError }}
-                </v-alert>
-                <v-alert v-if="schoolRequiredError" type="error" dense outlined class="mt-4 rounded-lg">
-                  กรุณาเลือกหรือค้นหาชื่อโรงเรียนก่อนบันทึกข้อมูล
-                </v-alert>
-
-                <v-divider class="my-6" />
-
-                <div class="d-flex flex-wrap justify-end" style="gap: 8px">
-                  <v-btn text rounded @click="resetForm" :disabled="submitting">ล้างแบบฟอร์ม</v-btn>
-                  <v-btn
-                    color="primary"
-                    rounded
-                    large
-                    elevation="2"
-                    class="px-8 save-btn"
-                    :loading="submitting"
-                    @click="submitForm"
-                  >
-                    <v-icon left>mdi-content-save-outline</v-icon>
-                    บันทึกข้อมูล
+                <div v-else-if="!filteredSchools.length" class="text-center py-3">
+                  <div class="text-caption grey--text mb-2">ไม่พบโรงเรียนที่ค้นหา</div>
+                  <v-btn small text color="#1F6F4A" @click="selectedSchool = schoolSearchQuery.trim()">
+                    ใช้ชื่อ "{{ schoolSearchQuery.trim() }}"
                   </v-btn>
                 </div>
-          </v-form>
-        </v-card-text>
-      </v-card>
+              </div>
+            </div>
+          </v-card>
+        </v-col>
+
+        <!-- แบบบันทึกประจำวัน -->
+        <v-col cols="12" md="8" lg="9">
+          <v-card elevation="6" class="form-card rounded-xl">
+            <div class="d-flex justify-space-between align-start flex-wrap pa-4 pa-sm-6 pb-4" style="gap: 16px">
+              <div>
+                <div class="panel-eyebrow">แบบบันทึกประจำวัน</div>
+                <div class="text-h6 text-sm-h5 font-weight-bold">รายละเอียดเงินตามประเภท</div>
+              </div>
+              <div>
+                <div class="text-caption grey--text text-right mb-1">วันที่บันทึก</div>
+                <v-text-field
+                  :value="displayDate"
+                  dense
+                  outlined
+                  rounded
+                  readonly
+                  disabled
+                  hide-details
+                  append-icon="mdi-lock-outline"
+                  style="width: 170px"
+                  class="locked-date-field"
+                  title="วันที่บันทึกล็อคเป็นวันที่ปัจจุบัน"
+                />
+              </div>
+            </div>
+
+            <v-divider />
+
+            <v-form ref="form" v-model="formValid" lazy-validation>
+              <!-- รายการเงินและเงินฝากธนาคาร -->
+              <div class="section-bar">รายการเงินและเงินฝากธนาคาร</div>
+
+              <div class="ledger-subhead">
+                <span>รายการเงินฝากส่วนราชการผู้เบิก</span>
+                <span class="ledger-subhead__col">ยอดเงิน (บาท)</span>
+              </div>
+              <div v-for="item in remitItems" :key="'remit-' + item.key" class="ledger-row">
+                <span class="ledger-row__label">{{ item.label }}</span>
+                <v-text-field
+                  v-model.number="form.remit[item.key]"
+                  dense
+                  outlined
+                  hide-details
+                  type="number"
+                  placeholder="0.00"
+                  class="ledger-input"
+                />
+              </div>
+
+              <div class="ledger-subhead mt-2">
+                <span>รายการงบประมาณ</span>
+                <span class="ledger-subhead__col ledger-subhead__col--wide">
+                  <span>เงินสด (บาท)</span>
+                  <span>เงินฝากธนาคาร (บาท)</span>
+                </span>
+              </div>
+              <div v-for="item in allBudgetItems" :key="'budget-' + item.key" class="ledger-row">
+                <span class="ledger-row__label">{{ item.label }}</span>
+                <div class="ledger-row__inputs">
+                  <v-text-field
+                    v-model.number="form.budget[item.key].cash"
+                    dense
+                    outlined
+                    hide-details
+                    type="number"
+                    placeholder="0.00"
+                    class="ledger-input"
+                  />
+                  <v-text-field
+                    v-model.number="form.budget[item.key].bank"
+                    dense
+                    outlined
+                    hide-details
+                    type="number"
+                    placeholder="0.00"
+                    class="ledger-input"
+                  />
+                </div>
+              </div>
+
+              <!-- เงินคงเหลือ -->
+              <div class="section-bar mt-6">เงินคงเหลือ</div>
+              <div class="pa-4 pa-sm-6">
+                <v-row dense>
+                  <v-col v-for="meta in balanceMeta" :key="meta.key" cols="6">
+                    <div class="cell-label">{{ meta.label }}</div>
+                    <v-text-field
+                      :value="form.balance[meta.key]"
+                      dense
+                      outlined
+                      hide-details
+                      type="number"
+                      placeholder="0.00"
+                      class="ledger-input ledger-input--block"
+                      @input="setBalance(meta.key, $event)"
+                    >
+                      <template v-if="balanceOverridden[meta.key]" #append>
+                        <v-icon
+                          small
+                          color="#1F6F4A"
+                          title="คำนวณอัตโนมัติใหม่"
+                          style="cursor: pointer"
+                          @click="recalcBalance(meta.key)"
+                        >
+                          mdi-calculator-variant
+                        </v-icon>
+                      </template>
+                    </v-text-field>
+                  </v-col>
+                  <v-col cols="6">
+                    <div class="cell-label">รวมทั้งหมด</div>
+                    <div class="total-cell">{{ formatCurrency(grandTotal) }}</div>
+                  </v-col>
+                </v-row>
+              </div>
+
+              <!-- หมายเหตุเงินอื่น ๆ -->
+              <div class="section-bar">หมายเหตุเงินอื่น ๆ</div>
+              <div class="pa-4 pa-sm-6">
+                <v-row dense>
+                  <v-col v-for="meta in otherNoteMeta" :key="meta.key" cols="12" sm="6">
+                    <div class="cell-label">{{ meta.label }}</div>
+                    <v-text-field
+                      v-model="form.otherNote[meta.key]"
+                      dense
+                      outlined
+                      hide-details
+                      placeholder="ระบุรายละเอียด..."
+                      class="note-input"
+                    />
+                  </v-col>
+                </v-row>
+              </div>
+
+              <div class="px-4 px-sm-6">
+                <v-alert v-if="submitError" type="error" dense outlined class="mt-2 rounded-lg">
+                  {{ submitError }}
+                </v-alert>
+                <v-alert v-if="schoolRequiredError" type="error" dense outlined class="mt-2 rounded-lg">
+                  กรุณาเลือกหรือค้นหาชื่อโรงเรียนก่อนบันทึกข้อมูล
+                </v-alert>
+              </div>
+
+              <v-divider class="mt-6" />
+
+              <div class="d-flex flex-wrap justify-end pa-4 pa-sm-6" style="gap: 8px">
+                <v-btn text rounded @click="resetForm" :disabled="submitting">ล้างแบบฟอร์ม</v-btn>
+                <v-btn
+                  class="save-btn"
+                  dark
+                  rounded
+                  large
+                  elevation="2"
+                  :loading="submitting"
+                  @click="submitForm"
+                >
+                  <v-icon left>mdi-content-save-outline</v-icon>
+                  บันทึกข้อมูล
+                </v-btn>
+              </div>
+            </v-form>
+          </v-card>
+        </v-col>
+      </v-row>
     </v-container>
   </div>
 </template>
@@ -356,67 +288,48 @@ import {
   FINANCE_SPREADSHEET_ID,
   FINANCE_SCHOOL_LIST_GID
 } from '../config'
-import SectionHeader from '../components/SectionHeader.vue'
-import logo from '../assets/logo_udn3.png'
 
 const BUDGET_ITEMS = [
-  { key: 'perHead', label: 'เงินอุดหนุนรายหัว', icon: 'mdi-account-group-outline' },
-  { key: 'poorStudent', label: 'เงินอุดหนุนนักเรียนยากจน', icon: 'mdi-hand-heart-outline' },
-  { key: 'textbook', label: 'เงินอุดหนุนหนังสือนักเรียน', icon: 'mdi-book-open-variant' },
-  { key: 'uniform', label: 'เงินอุดหนุนเครื่องแบบนักเรียน', icon: 'mdi-tshirt-crew-outline' },
-  { key: 'supplies', label: 'เงินอุดหนุนอุปกรณ์การเรียน', icon: 'mdi-pencil-ruler-outline' },
-  { key: 'activity', label: 'เงินอุดหนุนกิจกรรมพัฒนาคุณภาพผู้เรียน', icon: 'mdi-run-fast' },
-  { key: 'lunch', label: 'เงินอาหารกลางวัน', icon: 'mdi-food-outline' },
-  { key: 'lunchFund', label: 'เงินกองทุนอาหารกลางวัน', icon: 'mdi-piggy-bank-outline' },
-  { key: 'equityFund', label: 'เงินกองทุนเพื่อความเสมอภาคทางการศึกษา', icon: 'mdi-scale-balance' },
-  { key: 'schoolIncome', label: 'เงินรายได้สถานศึกษา', icon: 'mdi-domain' },
-  { key: 'stateIncome', label: 'เงินรายได้แผ่นดิน', icon: 'mdi-bank-outline' },
-  { key: 'withholdingTax', label: 'เงินภาษีหัก ณ ที่จ่าย', icon: 'mdi-receipt-text-outline' }
+  { key: 'perHead', label: 'เงินอุดหนุนรายหัว' },
+  { key: 'poorStudent', label: 'เงินอุดหนุนนักเรียนยากจน' },
+  { key: 'textbook', label: 'เงินอุดหนุนหนังสือนักเรียน' },
+  { key: 'uniform', label: 'เงินอุดหนุนเครื่องแบบนักเรียน' },
+  { key: 'supplies', label: 'เงินอุดหนุนอุปกรณ์การเรียน' },
+  { key: 'activity', label: 'เงินอุดหนุนกิจกรรมพัฒนาคุณภาพผู้เรียน' },
+  { key: 'lunch', label: 'เงินอาหารกลางวัน' },
+  { key: 'lunchFund', label: 'เงินกองทุนอาหารกลางวัน' },
+  { key: 'equityFund', label: 'เงินกองทุนเพื่อความเสมอภาคทางการศึกษา' },
+  { key: 'schoolIncome', label: 'เงินรายได้สถานศึกษา' },
+  { key: 'stateIncome', label: 'เงินรายได้แผ่นดิน' },
+  { key: 'withholdingTax', label: 'เงินภาษีหัก ณ ที่จ่าย' }
 ]
 
 const OTHER_ITEMS = [
-  { key: 'other1', label: 'เงินอื่น ๆ รายการที่ 1', icon: 'mdi-shape-outline' },
-  { key: 'other2', label: 'เงินอื่นๆ รายการที่ 2', icon: 'mdi-shape-plus-outline' }
+  { key: 'other1', label: 'เงินอื่น ๆ รายการที่ 1' },
+  { key: 'other2', label: 'เงินอื่นๆ รายการที่ 2' }
 ]
 
 const ALL_BUDGET_ITEMS = BUDGET_ITEMS.concat(OTHER_ITEMS)
 
-const BUDGET_GROUP_DEFS = [
-  { title: 'เงินอุดหนุน', icon: 'mdi-hand-coin-outline', color: '#1565C0', keys: ['perHead', 'poorStudent', 'textbook', 'uniform', 'supplies', 'activity', 'lunch'] },
-  { title: 'เงินกองทุน', icon: 'mdi-piggy-bank-outline', color: '#00695C', keys: ['lunchFund', 'equityFund'] },
-  { title: 'เงินรายได้และภาษี', icon: 'mdi-cash-register', color: '#F9A825', keys: ['schoolIncome', 'stateIncome', 'withholdingTax'] },
-  { title: 'เงินอื่น ๆ', icon: 'mdi-dots-horizontal-circle-outline', color: '#546E7A', keys: ['other1', 'other2'] }
-]
-
 const REMIT_ITEMS = [
-  { key: 'contractDeposit', label: 'เงินประกันสัญญา', icon: 'mdi-file-document-edit-outline' },
-  { key: 'lunch', label: 'เงินอาหารกลางวัน', icon: 'mdi-food-outline' }
+  { key: 'contractDeposit', label: 'เงินประกันสัญญา' },
+  { key: 'lunch', label: 'เงินอาหารกลางวัน' }
 ]
 
 const BALANCE_META = [
-  { key: 'cash', label: 'เงินสด', icon: 'mdi-cash', color: '#2E7D32' },
-  { key: 'bank', label: 'เงินฝากธนาคาร', icon: 'mdi-bank', color: '#0D47A1' },
-  { key: 'remit', label: 'เงินฝากส่วนราชการผู้เบิก', icon: 'mdi-domain', color: '#6A1B9A' }
+  { key: 'cash', label: 'เงินสด' },
+  { key: 'bank', label: 'เงินฝากธนาคาร' },
+  { key: 'remit', label: 'เงินฝากส่วนราชการผู้เบิก' }
 ]
 
 const OTHER_NOTE_META = [
-  { key: 'other1', label: 'เงินอื่นๆ รายการที่ 1', icon: 'mdi-shape-outline', color: '#546E7A' },
-  { key: 'other2', label: 'เงินอื่นๆ รายการที่ 2', icon: 'mdi-shape-plus-outline', color: '#546E7A' }
+  { key: 'other1', label: 'เงินอื่นๆ รายการที่ 1' },
+  { key: 'other2', label: 'เงินอื่นๆ รายการที่ 2' }
 ]
 
 function toNum(v) {
   const n = Number(v)
   return Number.isFinite(n) ? n : 0
-}
-
-function hexToRgba(hex, alpha) {
-  const clean = hex.replace('#', '')
-  const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean
-  const bigint = parseInt(full, 16)
-  const r = (bigint >> 16) & 255
-  const g = (bigint >> 8) & 255
-  const b = bigint & 255
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 function emptyBudget() {
@@ -433,7 +346,7 @@ function emptyForm() {
     remit: { contractDeposit: 0, lunch: 0 },
     budget: emptyBudget(),
     balance: { cash: 0, bank: 0, remit: 0 },
-    otherNote: { other1: 0, other2: 0 }
+    otherNote: { other1: '', other2: '' }
   }
 }
 
@@ -479,65 +392,58 @@ function parseCsv(text) {
 
 export default {
   name: 'FinanceRecordView',
-  components: { SectionHeader },
   data() {
     return {
-      logo,
       form: emptyForm(),
       formValid: true,
-      dateMenu: false,
       allBudgetItems: ALL_BUDGET_ITEMS,
-      budgetItems: BUDGET_ITEMS,
       remitItems: REMIT_ITEMS,
       balanceMeta: BALANCE_META,
       otherNoteMeta: OTHER_NOTE_META,
-      budgetGroups: BUDGET_GROUP_DEFS.map((group) => ({
-        title: group.title,
-        icon: group.icon,
-        color: group.color,
-        items: group.keys.map((key) => ALL_BUDGET_ITEMS.find((item) => item.key === key))
-      })),
       selectedSchool: null,
+      schoolSearchQuery: '',
       schoolOptions: [],
       schoolsLoading: false,
       schoolsError: '',
       balanceOverridden: { cash: false, bank: false, remit: false },
-      otherNoteOverridden: { other1: false, other2: false },
       submitting: false,
       submitError: '',
       schoolRequiredError: false,
       submitted: false,
       lastSavedSchool: '',
       lastSavedDateDisplay: '',
-      lastSavedTotal: 0,
-      rules: {
-        required: (v) => (v !== null && v !== undefined && String(v).trim() !== '') || 'กรุณากรอกข้อมูลนี้'
-      }
+      lastSavedTotal: 0
     }
   },
   computed: {
-    displayDate: {
-      get() {
-        if (!this.form.recordDate) return ''
-        const [y, m, d] = this.form.recordDate.split('-')
-        return `${d}/${m}/${y}`
-      },
-      set() {}
+    displayDate() {
+      if (!this.form.recordDate) return ''
+      const [y, m, d] = this.form.recordDate.split('-')
+      return `${d}/${m}/${y}`
+    },
+    numberedSchools() {
+      return this.schoolOptions.map((name, i) => ({ number: String(i + 1).padStart(3, '0'), name }))
+    },
+    filteredSchools() {
+      const q = this.schoolSearchQuery.trim().toLowerCase()
+      if (!q) return this.numberedSchools
+      return this.numberedSchools.filter(
+        (s) => s.name.toLowerCase().includes(q) || s.number.includes(q)
+      )
+    },
+    selectedSchoolDisplay() {
+      if (!this.selectedSchool) return ''
+      const found = this.numberedSchools.find((s) => s.name === this.selectedSchool)
+      return found ? `${found.number} - ${found.name}` : this.selectedSchool
     },
     computedCashSum() {
-      return this.budgetItems.reduce((sum, item) => sum + toNum(this.form.budget[item.key].cash), 0)
+      return this.allBudgetItems.reduce((sum, item) => sum + toNum(this.form.budget[item.key].cash), 0)
     },
     computedBankSum() {
-      return this.budgetItems.reduce((sum, item) => sum + toNum(this.form.budget[item.key].bank), 0)
+      return this.allBudgetItems.reduce((sum, item) => sum + toNum(this.form.budget[item.key].bank), 0)
     },
     computedRemitSum() {
       return toNum(this.form.remit.contractDeposit) + toNum(this.form.remit.lunch)
-    },
-    computedOther1Sum() {
-      return toNum(this.form.budget.other1.cash) + toNum(this.form.budget.other1.bank)
-    },
-    computedOther2Sum() {
-      return toNum(this.form.budget.other2.cash) + toNum(this.form.budget.other2.bank)
     },
     grandTotal() {
       return toNum(this.form.balance.cash) + toNum(this.form.balance.bank) + toNum(this.form.balance.remit)
@@ -552,31 +458,17 @@ export default {
     },
     computedRemitSum(val) {
       if (!this.balanceOverridden.remit) this.form.balance.remit = val
-    },
-    computedOther1Sum(val) {
-      if (!this.otherNoteOverridden.other1) this.form.otherNote.other1 = val
-    },
-    computedOther2Sum(val) {
-      if (!this.otherNoteOverridden.other2) this.form.otherNote.other2 = val
     }
   },
   created() {
     this.form.balance.cash = this.computedCashSum
     this.form.balance.bank = this.computedBankSum
     this.form.balance.remit = this.computedRemitSum
-    this.form.otherNote.other1 = this.computedOther1Sum
-    this.form.otherNote.other2 = this.computedOther2Sum
     this.fetchSchools()
   },
   methods: {
     formatCurrency(v) {
       return toNum(v).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    },
-    panelStyle(color) {
-      return {
-        backgroundColor: hexToRgba(color, 0.06),
-        borderLeft: `4px solid ${color}`
-      }
     },
     setBalance(field, value) {
       this.form.balance[field] = toNum(value)
@@ -586,15 +478,6 @@ export default {
       this.balanceOverridden[field] = false
       const map = { cash: 'computedCashSum', bank: 'computedBankSum', remit: 'computedRemitSum' }
       this.form.balance[field] = this[map[field]]
-    },
-    setOtherNote(field, value) {
-      this.form.otherNote[field] = toNum(value)
-      this.otherNoteOverridden[field] = true
-    },
-    recalcOtherNote(field) {
-      this.otherNoteOverridden[field] = false
-      const map = { other1: 'computedOther1Sum', other2: 'computedOther2Sum' }
-      this.form.otherNote[field] = this[map[field]]
     },
     async fetchSchools() {
       this.schoolsLoading = true
@@ -632,12 +515,9 @@ export default {
     resetForm() {
       this.form = emptyForm()
       this.balanceOverridden = { cash: false, bank: false, remit: false }
-      this.otherNoteOverridden = { other1: false, other2: false }
       this.form.balance.cash = this.computedCashSum
       this.form.balance.bank = this.computedBankSum
       this.form.balance.remit = this.computedRemitSum
-      this.form.otherNote.other1 = this.computedOther1Sum
-      this.form.otherNote.other2 = this.computedOther2Sum
       this.submitError = ''
       this.schoolRequiredError = false
       if (this.$refs.form) this.$refs.form.resetValidation()
@@ -669,8 +549,8 @@ export default {
           remit: toNum(this.form.balance.remit)
         },
         otherNote: {
-          other1: toNum(this.form.otherNote.other1),
-          other2: toNum(this.form.otherNote.other2)
+          other1: (this.form.otherNote.other1 || '').toString().trim(),
+          other2: (this.form.otherNote.other2 || '').toString().trim()
         }
       }
     },
@@ -732,9 +612,13 @@ export default {
 </script>
 
 <style scoped>
+.finance-page {
+  background-color: #f7f5ec;
+}
+
 .hero {
-  background: linear-gradient(135deg, #0d47a1, #00695c);
-  padding-bottom: 72px;
+  background: linear-gradient(135deg, #1b5e43, #2f7d5b);
+  padding-bottom: 64px;
   position: relative;
 }
 
@@ -747,80 +631,249 @@ export default {
   pointer-events: none;
 }
 
-.hero-avatar {
-  border: 3px solid rgba(255, 255, 255, 0.6);
+.hero-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.hero-eyebrow {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hero-subtitle {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+  max-width: 640px;
 }
 
 .content-lift {
-  margin-top: -56px;
+  margin-top: -40px;
   position: relative;
   z-index: 1;
 }
 
+.sidebar-card,
 .form-card,
-.success-card,
-.school-toolbar {
-  background: linear-gradient(180deg, #ffffff 0%, #f6f8fc 100%);
+.success-card {
+  background-color: #fff;
   position: relative;
   overflow: hidden;
 }
 
 .form-card::before,
-.success-card::before,
-.school-toolbar::before {
+.success-card::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 5px;
-  background: linear-gradient(90deg, #0d47a1, #00695c);
+  background: linear-gradient(90deg, #1b5e43, #2f7d5b);
 }
 
-.school-combobox ::v-deep .v-select__selection {
-  font-weight: 600;
-  color: #0d47a1;
-}
-
-.section-panel {
-  border-radius: 14px;
-}
-
-.entry-card {
-  border-radius: 14px !important;
-  background-color: #fff !important;
-  transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
-  box-shadow: 0 1px 3px rgba(15, 30, 60, 0.08) !important;
-}
-
-.entry-card:hover {
-  box-shadow: 0 4px 14px rgba(13, 71, 161, 0.12) !important;
-  transform: translateY(-1px);
-}
-
-.stat-card {
-  border-radius: 14px !important;
-  background-color: #fff !important;
-  border-top-width: 4px !important;
-  border-top-style: solid !important;
-  box-shadow: 0 1px 3px rgba(15, 30, 60, 0.08) !important;
-}
-
-.stat-card--muted {
-  background-color: #fbfbfb !important;
-}
-
-.stat-input ::v-deep input {
-  font-size: 1.15rem;
+.panel-eyebrow {
+  color: #8a8a8a;
+  font-size: 0.78rem;
   font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
 }
 
-.total-banner {
-  font-size: 1.05rem;
+.selected-school-chip {
+  background: #e7f2ea;
+  color: #155a3b;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+}
+
+.school-list {
+  max-height: 560px;
+  overflow-y: auto;
+}
+
+.school-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-left: 3px solid transparent;
+  border-radius: 8px;
+  padding: 10px 10px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: #333;
+  transition: background 0.15s ease;
+}
+
+.school-item:hover {
+  background: #f5f4ee;
+}
+
+.school-item--active {
+  background: #e7f2ea;
+  border-left-color: #1f6f4a;
+  font-weight: 700;
+  color: #155a3b;
+}
+
+.school-item__number {
+  color: #9a9a9a;
+  font-variant-numeric: tabular-nums;
+}
+
+.school-item--active .school-item__number {
+  color: #1f6f4a;
+}
+
+.school-item__dot {
+  color: #ccc;
+}
+
+.school-item__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.section-bar {
+  background: #e7f2ea;
+  color: #155a3b;
+  font-weight: 700;
+  font-size: 0.92rem;
+  padding: 12px 24px;
+}
+
+.ledger-subhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 24px;
+  font-size: 0.76rem;
+  color: #8a8a8a;
+  font-weight: 700;
+  border-bottom: 1px solid #eee;
+}
+
+.ledger-subhead__col {
+  min-width: 130px;
+  text-align: right;
+}
+
+.ledger-subhead__col--wide {
+  display: flex;
+  gap: 12px;
+}
+
+.ledger-subhead__col--wide span {
+  min-width: 130px;
+  text-align: right;
+}
+
+.ledger-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 24px;
+  border-bottom: 1px solid #f2f1ea;
+}
+
+.ledger-row:last-of-type {
+  border-bottom: none;
+}
+
+.ledger-row__label {
+  font-size: 0.88rem;
+  color: #333;
+  flex: 1;
+}
+
+.ledger-row__inputs {
+  display: flex;
+  gap: 12px;
+}
+
+.ledger-input {
+  max-width: 130px;
+}
+
+.ledger-input--block {
+  max-width: none;
+}
+
+.ledger-input ::v-deep .v-input__slot {
+  min-height: 36px !important;
+  background: #fff;
+}
+
+.ledger-input ::v-deep input {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ledger-input ::v-deep input::-webkit-outer-spin-button,
+.ledger-input ::v-deep input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.ledger-input ::v-deep input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.note-input ::v-deep .v-input__slot {
+  min-height: 36px !important;
+  background: #fff;
+}
+
+.locked-date-field.v-input--is-disabled ::v-deep .v-input__slot {
+  background: #f5f4ee !important;
+}
+
+.locked-date-field ::v-deep input {
+  color: #333 !important;
+  -webkit-text-fill-color: #333 !important;
+}
+
+.locked-date-field ::v-deep .v-icon {
+  color: #9a9a9a !important;
+}
+
+.cell-label {
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.total-cell {
+  background: #fbf3d8;
+  border: 1px solid #f1e2a8;
+  border-radius: 8px;
+  padding: 10px 14px;
+  text-align: right;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #7a5c00;
 }
 
 .save-btn {
-  background: linear-gradient(135deg, #0d47a1, #00695c) !important;
+  background: linear-gradient(135deg, #1b5e43, #2f7d5b) !important;
 }
 
 .success-pulse {
@@ -829,19 +882,26 @@ export default {
 
 @keyframes pulse-ring {
   0% {
-    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.45);
+    box-shadow: 0 0 0 0 rgba(31, 111, 74, 0.45);
   }
   100% {
-    box-shadow: 0 0 0 20px rgba(46, 125, 50, 0);
+    box-shadow: 0 0 0 20px rgba(31, 111, 74, 0);
   }
 }
 
-.form-card ::v-deep .v-label,
-.form-card ::v-deep input,
-.form-card ::v-deep textarea,
-.form-card ::v-deep .v-select__selection,
-.form-card ::v-deep .v-messages,
-.form-card ::v-deep .v-btn__content {
-  font-size: 1rem;
+@media (max-width: 600px) {
+  .ledger-row {
+    flex-wrap: wrap;
+  }
+
+  .ledger-row__label {
+    flex: 1 1 100%;
+    margin-bottom: 6px;
+  }
+
+  .ledger-subhead {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
 }
 </style>

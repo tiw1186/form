@@ -1,10 +1,10 @@
 <template>
   <v-app>
-    <v-app-bar color="white" flat app elevation="1">
+    <v-app-bar class="app-bar-gradient" flat app elevation="1">
       <v-avatar size="40" class="mr-3" tile>
         <v-img :src="logo" contain />
       </v-avatar>
-      <v-toolbar-title class="text-body-2 text-sm-h6 font-weight-bold primary--text">
+      <v-toolbar-title class="text-body-2 text-sm-h6 font-weight-bold white--text">
         สำนักงานเขตพื้นที่การศึกษาประถมศึกษาอุดรธานี เขต 3
       </v-toolbar-title>
     </v-app-bar>
@@ -40,5 +40,10 @@ export default {
 <style scoped>
 .app-main {
   background-color: #f2f4f8;
+}
+
+.app-bar-gradient,
+.app-bar-gradient ::v-deep .v-toolbar__content {
+  background: linear-gradient(90deg, #1565c0, #0d47a1) !important;
 }
 </style>
