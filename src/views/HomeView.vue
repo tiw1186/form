@@ -6,7 +6,7 @@
           <v-img :src="logo" contain />
         </v-avatar>
         <div class="text-h5 text-sm-h4 font-weight-bold white--text px-4">
-          ระบบ สพป.อุดรธานี เขต 3
+          สพป.อุดรธานี เขต 3
         </div>
         <div class="text-body-2 text-sm-subtitle-1 white--text mt-2" style="opacity: 0.85">
           เลือกระบบที่ต้องการใช้งาน

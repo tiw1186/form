@@ -12,7 +12,7 @@ const routes = [
     path: '/',
     name: 'home',
     component: HomeView,
-    meta: { title: 'ระบบ สพป.อุดรธานี เขต 3' }
+    meta: { title: 'สพป.อุดรธานี เขต 3' }
   },
   {
     path: '/form',
