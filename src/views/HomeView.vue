@@ -14,9 +14,9 @@
       </v-container>
     </div>
 
-    <v-container class="content-lift pb-10" style="max-width: 900px">
+    <v-container class="content-lift pb-10" style="max-width: 1100px">
       <v-row>
-        <v-col v-for="item in systems" :key="item.to" cols="12" sm="6">
+        <v-col v-for="item in systems" :key="item.to" cols="12" sm="6" md="4">
           <v-card
             elevation="6"
             class="pa-6 rounded-xl system-card"
@@ -60,6 +60,13 @@ export default {
           description: 'ค้นหาโรงเรียน กรอกยอดเงิน และบันทึกข้อมูลประจำวัน',
           icon: 'mdi-cash-multiple',
           color: '#1F6F4A'
+        },
+        {
+          to: '/udn3-expert',
+          title: 'ผลงานประเมินวิทยฐานะเชี่ยวชาญ',
+          description: 'นางแสงเดือน สุขรมย์ รองผู้อำนวยการเขตพื้นที่การศึกษาประถมศึกษาอุดรธานี เขต 3',
+          icon: 'mdi-account-star-outline',
+          color: '#6A1B9A'
         }
       ]
     }
