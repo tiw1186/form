@@ -4,17 +4,6 @@
 
 var SCHOOL_LIST_GID = 0;           // gid=0 : ชีตรายชื่อโรงเรียน
 var RECORD_SHEET_GID = 1035907838; // gid=1035907838 : ชีตบันทึกเงินคงเหลือประจำวัน
-var ATTACHMENT_FOLDER_NAME = 'ไฟล์แนบ - บันทึกเงินคงเหลือประจำวัน';
-
-var ALLOWED_ATTACHMENT_MIME_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-];
 
 function getSheetByGid_(gid) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -47,48 +36,6 @@ function getSchoolNames_() {
   return names;
 }
 
-function getOrCreateAttachmentFolder_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var ssFile = DriveApp.getFileById(ss.getId());
-  var parents = ssFile.getParents();
-  var parentFolder = parents.hasNext() ? parents.next() : DriveApp.getRootFolder();
-
-  var existing = parentFolder.getFoldersByName(ATTACHMENT_FOLDER_NAME);
-  if (existing.hasNext()) return existing.next();
-  return parentFolder.createFolder(ATTACHMENT_FOLDER_NAME);
-}
-
-function sanitizeFileNamePart_(text) {
-  return String(text || '').replace(/[\\/:*?"<>|]/g, '').trim();
-}
-
-function saveAttachments_(attachments, schoolName, recordDate) {
-  if (!attachments || !attachments.length) return [];
-
-  var folder = getOrCreateAttachmentFolder_();
-  var links = [];
-  var prefixParts = [sanitizeFileNamePart_(recordDate), sanitizeFileNamePart_(schoolName)].filter(Boolean);
-  var prefix = prefixParts.length ? prefixParts.join('_') + '_' : '';
-
-  attachments.forEach(function (att) {
-    if (!att || !att.base64 || !att.name) return;
-    if (ALLOWED_ATTACHMENT_MIME_TYPES.indexOf(att.mimeType) === -1) return;
-
-    try {
-      var bytes = Utilities.base64Decode(att.base64);
-      var fileName = prefix + sanitizeFileNamePart_(att.name);
-      var blob = Utilities.newBlob(bytes, att.mimeType, fileName);
-      var file = folder.createFile(blob);
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      links.push(file.getName() + ': ' + file.getUrl());
-    } catch (err) {
-      links.push(att.name + ': อัปโหลดไม่สำเร็จ');
-    }
-  });
-
-  return links;
-}
-
 function buildRecordHeaders_(data) {
   var headers = ['วันที่/เวลาบันทึก', 'วันที่บันทึกข้อมูล', 'ชื่อโรงเรียน'];
   headers.push('เงินฝากส่วนราชการผู้เบิก - เงินประกันสัญญา (บาท)');
@@ -105,7 +52,7 @@ function buildRecordHeaders_(data) {
   headers.push('เงินคงเหลือ - รวมทั้งหมด (บาท)');
   headers.push('หมายเหตุอื่นๆ - เงินอื่นๆ รายการที่ 1');
   headers.push('หมายเหตุอื่นๆ - เงินอื่นๆ รายการที่ 2');
-  headers.push('ไฟล์แนบ');
+  headers.push('ตรวจสอบความถูกต้องของข้อมูล');
   return headers;
 }
 
@@ -146,9 +93,7 @@ function doPost(e) {
     row.push((data.balance && data.balance.total) || 0);
     row.push((data.otherNote && data.otherNote.other1) || '');
     row.push((data.otherNote && data.otherNote.other2) || '');
-
-    var attachmentLinks = saveAttachments_(data.attachments, data.schoolName, data.recordDate);
-    row.push(attachmentLinks.join('\n'));
+    row.push(data.dataVerification || '');
 
     sheet.appendRow(row);
 
