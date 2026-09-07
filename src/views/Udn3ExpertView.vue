@@ -222,7 +222,7 @@ function fileItem(text) {
 const FIELD2_DOC_URL_OVERRIDES = {
   'ผลลัพธ์ที่เกิดกับผู้เรียน นักศึกษา หรือผู้รับบริการ': 'https://drive.google.com/file/d/1ZzACpIu8QUIk9kg6MQPsuT9hjQPkJvir/view',
   'ผลลัพธ์ที่เกิดกับข้าราชการครูและบุคลากรทางการศึกษา': 'https://drive.google.com/file/d/11N7tkjDcLZo1EltyyLrzDj_Jkah71QtM/view',
-  'ผลลัพธ์ที่เกิดกับสถานศึกษาและหน่วยงานการศึกษาในพื้นที่รับผิดชอบ': 'https://drive.google.com/file/d/1F7M0t8eLscPWDA2wWeUWmo1WrKQgvO2y/view'
+  'ผลลัพธ์ที่เกิดกับสถานศึกษาและหน่วยงานการศึกษาในพื้นที่รับผิดชอบ': 'https://drive.google.com/drive/folders/1dK7W2hxNASV6ZXBpJuBFl9PM6eytUfyv'
 }
 
 const FIELD2_DOC_BIBLIOGRAPHY_URL = 'https://drive.google.com/file/d/1bDldTpI0KjVUPKhZozkGxe_ZCAkr_Zin/view'
@@ -230,7 +230,7 @@ const FIELD2_DOC_BIBLIOGRAPHY_URL = 'https://drive.google.com/file/d/1bDldTpI0Kj
 const FIELD2_PRESENT_URL_OVERRIDES = {
   'ผลลัพธ์ที่เกิดกับผู้เรียน นักศึกษา หรือผู้รับบริการ': 'https://drive.google.com/file/d/1oxUAf7R275h-y19EBVG2yPk6Rjft4Onb/view',
   'ผลลัพธ์ที่เกิดกับข้าราชการครูและบุคลากรทางการศึกษา': 'https://drive.google.com/file/d/1h5vlHiFFRNP3dw69Qu9mcQJtOB3SOSSF/view',
-  'ผลลัพธ์ที่เกิดกับสถานศึกษาและหน่วยงานการศึกษาในพื้นที่รับผิดชอบ': 'https://drive.google.com/file/d/1DVbz21nNJQwdiqGKxc2aIPwnSWnE7toj/view'
+  'ผลลัพธ์ที่เกิดกับสถานศึกษาและหน่วยงานการศึกษาในพื้นที่รับผิดชอบ': 'https://drive.google.com/drive/folders/1dK7W2hxNASV6ZXBpJuBFl9PM6eytUfyv'
 }
 
 // ไฟล์ฝั่งเอกสารของด้านที่ 1 ทั้งหมดย้ายไปโฮสต์บน Google Drive แทนการรวมไว้ในเว็บโดยตรง
