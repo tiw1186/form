@@ -153,13 +153,15 @@
               <div v-for="item in remitItems" :key="'remit-' + item.key" class="ledger-row">
                 <span class="ledger-row__label">{{ item.label }}</span>
                 <v-text-field
-                  v-model.number="form.remit[item.key]"
+                  :value="form.remit[item.key]"
                   dense
                   outlined
                   hide-details
                   inputmode="decimal"
                   placeholder="0.00"
                   class="ledger-input"
+                  @keypress="blockNonNumericKey"
+                  @input="setRemit(item.key, $event)"
                 />
               </div>
 
@@ -174,22 +176,26 @@
                 <span class="ledger-row__label">{{ item.label }}</span>
                 <div class="ledger-row__inputs">
                   <v-text-field
-                    v-model.number="form.budget[item.key].cash"
+                    :value="form.budget[item.key].cash"
                     dense
                     outlined
                     hide-details
                     inputmode="decimal"
                     placeholder="0.00"
                     class="ledger-input"
+                    @keypress="blockNonNumericKey"
+                    @input="setBudget(item.key, 'cash', $event)"
                   />
                   <v-text-field
-                    v-model.number="form.budget[item.key].bank"
+                    :value="form.budget[item.key].bank"
                     dense
                     outlined
                     hide-details
                     inputmode="decimal"
                     placeholder="0.00"
                     class="ledger-input"
+                    @keypress="blockNonNumericKey"
+                    @input="setBudget(item.key, 'bank', $event)"
                   />
                 </div>
               </div>
@@ -208,6 +214,7 @@
                       inputmode="decimal"
                       placeholder="0.00"
                       class="ledger-input ledger-input--block"
+                      @keypress="blockNonNumericKey"
                       @input="setBalance(meta.key, $event)"
                     >
                       <template v-if="balanceOverridden[meta.key]" #append>
@@ -369,6 +376,21 @@ function toNum(v) {
   return Number.isFinite(n) ? n : 0
 }
 
+function round2(v) {
+  return Math.round(toNum(v) * 100) / 100
+}
+
+function sanitizeMoney(raw) {
+  let str = raw === null || raw === undefined ? '' : String(raw)
+  str = str.replace(/[^0-9.]/g, '')
+  const dotIndex = str.indexOf('.')
+  if (dotIndex !== -1) {
+    str = str.slice(0, dotIndex + 1) + str.slice(dotIndex + 1).replace(/\./g, '')
+    str = str.slice(0, dotIndex + 3)
+  }
+  return str
+}
+
 function emptyBudget() {
   const budget = {}
   ALL_BUDGET_ITEMS.forEach((item) => {
@@ -478,16 +500,16 @@ export default {
       return found ? `${found.number} - ${found.name}` : this.selectedSchool
     },
     computedCashSum() {
-      return this.allBudgetItems.reduce((sum, item) => sum + toNum(this.form.budget[item.key].cash), 0)
+      return round2(this.allBudgetItems.reduce((sum, item) => sum + toNum(this.form.budget[item.key].cash), 0))
     },
     computedBankSum() {
-      return this.allBudgetItems.reduce((sum, item) => sum + toNum(this.form.budget[item.key].bank), 0)
+      return round2(this.allBudgetItems.reduce((sum, item) => sum + toNum(this.form.budget[item.key].bank), 0))
     },
     computedRemitSum() {
-      return toNum(this.form.remit.contractDeposit) + toNum(this.form.remit.lunch)
+      return round2(toNum(this.form.remit.contractDeposit) + toNum(this.form.remit.lunch))
     },
     grandTotal() {
-      return toNum(this.form.balance.cash) + toNum(this.form.balance.bank) + toNum(this.form.balance.remit)
+      return round2(toNum(this.form.balance.cash) + toNum(this.form.balance.bank) + toNum(this.form.balance.remit))
     }
   },
   watch: {
@@ -518,8 +540,22 @@ export default {
     formatCurrency(v) {
       return toNum(v).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     },
+    blockNonNumericKey(event) {
+      if (event.ctrlKey || event.metaKey || event.altKey) return
+      const key = event.key
+      if (key.length > 1) return
+      if (/[0-9]/.test(key)) return
+      if (key === '.' && !String(event.target.value || '').includes('.')) return
+      event.preventDefault()
+    },
+    setRemit(key, value) {
+      this.form.remit[key] = sanitizeMoney(value)
+    },
+    setBudget(key, type, value) {
+      this.form.budget[key][type] = sanitizeMoney(value)
+    },
     setBalance(field, value) {
-      this.form.balance[field] = toNum(value)
+      this.form.balance[field] = sanitizeMoney(value)
       this.balanceOverridden[field] = true
     },
     recalcBalance(field) {
