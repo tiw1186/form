@@ -53,6 +53,7 @@ function buildRecordHeaders_(data) {
   headers.push('หมายเหตุอื่นๆ - เงินอื่นๆ รายการที่ 1');
   headers.push('หมายเหตุอื่นๆ - เงินอื่นๆ รายการที่ 2');
   headers.push('ตรวจสอบความถูกต้องของข้อมูล');
+  headers.push('เหตุผลที่ข้อมูลไม่ถูกต้อง');
   return headers;
 }
 
@@ -65,6 +66,12 @@ function getOrCreateRecordSheet_(data) {
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(buildRecordHeaders_(data));
     sheet.setFrozenRows(1);
+  } else {
+    var lastCol = sheet.getLastColumn();
+    var headerRow = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    if (headerRow.indexOf('เหตุผลที่ข้อมูลไม่ถูกต้อง') === -1) {
+      sheet.getRange(1, lastCol + 1).setValue('เหตุผลที่ข้อมูลไม่ถูกต้อง');
+    }
   }
   return sheet;
 }
@@ -94,6 +101,7 @@ function doPost(e) {
     row.push((data.otherNote && data.otherNote.other1) || '');
     row.push((data.otherNote && data.otherNote.other2) || '');
     row.push(data.dataVerification || '');
+    row.push(data.verificationReason || '');
 
     sheet.appendRow(row);
 

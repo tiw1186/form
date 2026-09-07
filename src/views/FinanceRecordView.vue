@@ -266,6 +266,23 @@
                 <v-alert v-if="verificationRequiredError" type="error" dense outlined class="mt-3 rounded-lg">
                   กรุณาเลือกผลการตรวจสอบความถูกต้องของข้อมูลก่อนบันทึกข้อมูล
                 </v-alert>
+
+                <div v-if="dataVerification === 'incorrect'" class="mt-3">
+                  <div class="text-body-2 grey--text text--darken-1 mb-1">
+                    ระบุเหตุผลที่ข้อมูลไม่ถูกต้อง
+                  </div>
+                  <v-textarea
+                    v-model="verificationReason"
+                    outlined
+                    dense
+                    rows="3"
+                    hide-details
+                    placeholder="ระบุเหตุผล..."
+                  />
+                  <v-alert v-if="verificationReasonRequiredError" type="error" dense outlined class="mt-3 rounded-lg">
+                    กรุณาระบุเหตุผลที่ข้อมูลไม่ถูกต้องก่อนบันทึกข้อมูล
+                  </v-alert>
+                </div>
               </div>
 
               <div class="px-4 px-sm-6">
@@ -428,6 +445,8 @@ export default {
       balanceOverridden: { cash: false, bank: false, remit: false },
       dataVerification: null,
       verificationRequiredError: false,
+      verificationReason: '',
+      verificationReasonRequiredError: false,
       submitting: false,
       submitError: '',
       schoolRequiredError: false,
@@ -480,6 +499,13 @@ export default {
     },
     computedRemitSum(val) {
       if (!this.balanceOverridden.remit) this.form.balance.remit = val
+    },
+    dataVerification(val) {
+      this.verificationRequiredError = false
+      if (val !== 'incorrect') {
+        this.verificationReason = ''
+        this.verificationReasonRequiredError = false
+      }
     }
   },
   created() {
@@ -542,6 +568,8 @@ export default {
       this.form.balance.remit = this.computedRemitSum
       this.dataVerification = null
       this.verificationRequiredError = false
+      this.verificationReason = ''
+      this.verificationReasonRequiredError = false
       this.submitError = ''
       this.schoolRequiredError = false
       if (this.$refs.form) this.$refs.form.resetValidation()
@@ -577,22 +605,27 @@ export default {
           other1: (this.form.otherNote.other1 || '').toString().trim(),
           other2: (this.form.otherNote.other2 || '').toString().trim()
         },
-        dataVerification: this.dataVerification === 'correct' ? 'ถูกต้อง' : 'ไม่ถูกต้อง'
+        dataVerification: this.dataVerification === 'correct' ? 'ถูกต้อง' : 'ไม่ถูกต้อง',
+        verificationReason: this.dataVerification === 'incorrect' ? this.verificationReason.trim() : ''
       }
     },
     async submitForm() {
       this.submitError = ''
       this.schoolRequiredError = false
       this.verificationRequiredError = false
+      this.verificationReasonRequiredError = false
 
       const isFormValid = this.$refs.form.validate()
       const hasSchool = !!(this.selectedSchool && this.selectedSchool.toString().trim())
       const hasVerification = !!this.dataVerification
+      const needsReason = this.dataVerification === 'incorrect'
+      const hasReason = !needsReason || !!this.verificationReason.trim()
 
       if (!hasSchool) this.schoolRequiredError = true
       if (!hasVerification) this.verificationRequiredError = true
+      if (needsReason && !hasReason) this.verificationReasonRequiredError = true
 
-      if (!isFormValid || !hasSchool || !hasVerification) {
+      if (!isFormValid || !hasSchool || !hasVerification || !hasReason) {
         this.$vuetify.goTo(0)
         return
       }
