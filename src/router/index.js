@@ -3,7 +3,7 @@ import VueRouter from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import SurveyView from '../views/SurveyView.vue'
 import FinanceRecordView from '../views/FinanceRecordView.vue'
-import Udn3ExpertView from '../views/Udn3ExpertView.vue'
+import SystemDisabledView from '../views/SystemDisabledView.vue'
 
 Vue.use(VueRouter)
 
@@ -29,8 +29,8 @@ const routes = [
   {
     path: '/udn3-expert',
     name: 'udn3-expert',
-    component: Udn3ExpertView,
-    meta: { title: 'ผลงานประเมินวิทยฐานะเชี่ยวชาญ - นางแสงเดือน สุขรมย์' }
+    component: SystemDisabledView,
+    meta: { title: 'ระบบปิดการใช้งาน' }
   }
 ]
 
