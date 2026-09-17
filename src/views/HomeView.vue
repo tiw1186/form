@@ -60,13 +60,6 @@ export default {
           description: 'ค้นหาโรงเรียน กรอกยอดเงิน และบันทึกข้อมูลประจำวัน',
           icon: 'mdi-cash-multiple',
           color: '#1F6F4A'
-        },
-        {
-          to: '/udn3-expert',
-          title: 'ผลงานประเมินวิทยฐานะเชี่ยวชาญ',
-          description: 'นางแสงเดือน สุขรมย์ รองผู้อำนวยการเขตพื้นที่การศึกษาประถมศึกษาอุดรธานี เขต 3',
-          icon: 'mdi-account-star-outline',
-          color: '#6A1B9A'
         }
       ]
     }

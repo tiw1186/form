@@ -153,7 +153,7 @@
               <div v-for="item in remitItems" :key="'remit-' + item.key" class="ledger-row">
                 <span class="ledger-row__label">{{ item.label }}</span>
                 <v-text-field
-                  :value="form.remit[item.key]"
+                  :value="displayMoney(form.remit[item.key])"
                   dense
                   outlined
                   hide-details
@@ -162,6 +162,7 @@
                   class="ledger-input"
                   @keypress="blockNonNumericKey"
                   @input="setRemit(item.key, $event)"
+                  @blur="blurRemit(item.key)"
                 />
               </div>
 
@@ -176,7 +177,7 @@
                 <span class="ledger-row__label">{{ item.label }}</span>
                 <div class="ledger-row__inputs">
                   <v-text-field
-                    :value="form.budget[item.key].cash"
+                    :value="displayMoney(form.budget[item.key].cash)"
                     dense
                     outlined
                     hide-details
@@ -185,9 +186,10 @@
                     class="ledger-input"
                     @keypress="blockNonNumericKey"
                     @input="setBudget(item.key, 'cash', $event)"
+                    @blur="blurBudget(item.key, 'cash')"
                   />
                   <v-text-field
-                    :value="form.budget[item.key].bank"
+                    :value="displayMoney(form.budget[item.key].bank)"
                     dense
                     outlined
                     hide-details
@@ -196,6 +198,7 @@
                     class="ledger-input"
                     @keypress="blockNonNumericKey"
                     @input="setBudget(item.key, 'bank', $event)"
+                    @blur="blurBudget(item.key, 'bank')"
                   />
                 </div>
               </div>
@@ -207,7 +210,7 @@
                   <v-col v-for="meta in balanceMeta" :key="meta.key" cols="6">
                     <div class="cell-label">{{ meta.label }}</div>
                     <v-text-field
-                      :value="form.balance[meta.key]"
+                      :value="displayMoney(form.balance[meta.key])"
                       dense
                       outlined
                       hide-details
@@ -216,6 +219,7 @@
                       class="ledger-input ledger-input--block"
                       @keypress="blockNonNumericKey"
                       @input="setBalance(meta.key, $event)"
+                      @blur="blurBalance(meta.key)"
                     >
                       <template v-if="balanceOverridden[meta.key]" #append>
                         <v-icon
@@ -380,6 +384,15 @@ function round2(v) {
   return Math.round(toNum(v) * 100) / 100
 }
 
+function displayMoney(value) {
+  if (value === null || value === undefined) return ''
+  if (typeof value === 'number') {
+    return value === 0 ? '' : value.toFixed(2)
+  }
+  const str = String(value)
+  return str === '0' ? '' : str
+}
+
 function sanitizeMoney(raw) {
   let str = raw === null || raw === undefined ? '' : String(raw)
   str = str.replace(/[^0-9.]/g, '')
@@ -540,12 +553,29 @@ export default {
     formatCurrency(v) {
       return toNum(v).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     },
+    displayMoney(value) {
+      return displayMoney(value)
+    },
     blockNonNumericKey(event) {
       if (event.ctrlKey || event.metaKey || event.altKey) return
       const key = event.key
       if (key.length > 1) return
-      if (/[0-9]/.test(key)) return
-      if (key === '.' && !String(event.target.value || '').includes('.')) return
+
+      const target = event.target
+      const value = String(target.value || '')
+      const selStart = target.selectionStart == null ? value.length : target.selectionStart
+      const selEnd = target.selectionEnd == null ? value.length : target.selectionEnd
+
+      if (/^[0-9]$/.test(key)) {
+        const nextValue = value.slice(0, selStart) + key + value.slice(selEnd)
+        const dotIndex = nextValue.indexOf('.')
+        if (dotIndex !== -1 && nextValue.length - dotIndex - 1 > 2) {
+          event.preventDefault()
+        }
+        return
+      }
+
+      if (key === '.' && !value.includes('.')) return
       event.preventDefault()
     },
     setRemit(key, value) {
@@ -557,6 +587,15 @@ export default {
     setBalance(field, value) {
       this.form.balance[field] = sanitizeMoney(value)
       this.balanceOverridden[field] = true
+    },
+    blurRemit(key) {
+      this.form.remit[key] = toNum(this.form.remit[key])
+    },
+    blurBudget(key, type) {
+      this.form.budget[key][type] = toNum(this.form.budget[key][type])
+    },
+    blurBalance(field) {
+      this.form.balance[field] = toNum(this.form.balance[field])
     },
     recalcBalance(field) {
       this.balanceOverridden[field] = false
